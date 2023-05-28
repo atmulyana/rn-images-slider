@@ -1,0 +1,26 @@
+{
+  "name": "rn-images-slider",
+  "version": "0.0.1",
+  "description": "React Native component for image slider",
+  "author": "AT Mulyana <atmulyana@yahoo.com>",
+  "license": "MIT",
+  "repository": "https://github.com/atmulyana/rn-images-slider",
+  "keywords": [
+    "react-native",
+    "images",
+    "slider"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "dependencies": {
+    "prop-types": "latest"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-is": "*",
+    "react-native": "*",
+    "rn-style-props": "*"
+  }
+}
