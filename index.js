@@ -3,12 +3,40 @@
  * https://github.com/atmulyana/rn-images-slider
  *
  * @format
+ * @flow strict-local
  */
-import React from 'react';
+import * as React from 'react';
 import {isValidElementType} from "react-is";
 import {Image, ScrollView, StyleSheet, Text, TouchableWithoutFeedback, View} from 'react-native';
-import PropTypes from 'prop-types';
+import type {ColorValue, ImageStyleProp} from 'react-native/Libraries/StyleSheet/StyleSheet';
+import type {ImageURISource} from 'react-native/Libraries/Image/ImageSource';
+import type {LayoutEvent, ScrollEvent} from 'react-native/Libraries/Types/CoreEventTypes';
 import {extractImageStyle} from 'rn-style-props';
+
+type ScrollViewRef = null | React.ElementRef<typeof ScrollView>;
+export type ImageSource = number | string | ImageURISource;
+
+export interface PagingProp {
+    color?: ColorValue,
+    count: number,
+    setIndex: number => void,
+    selectedIndex: number,
+}
+
+export interface PagingPosProp extends PagingProp {
+    outside?: boolean,
+}
+
+export type PagingComponent = React.AbstractComponent<PagingProp>;
+export type PagingPosComponent = React.AbstractComponent<PagingPosProp>;
+
+export type ImageSliderProp = {
+    onChange?: number => mixed,
+    paging?: PagingComponent,
+    pagingColor?: ColorValue,
+    srcSet?: ?ImageSource | Array<?ImageSource>,
+    style?: ImageStyleProp,
+};
 
 const MARGIN = 10,
       MAX_VISIBLE_PAGE_NUMBER = 5,
@@ -103,42 +131,46 @@ const styles = StyleSheet.create({
     },
 });
 
-const ImageSlider = React.memo(function ImageSlider({onChange, paging = DotPaging, pagingColor, srcSet, style}) {
-    style = extractImageStyle(style);
+const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(function ImageSlider(
+    {onChange, paging = DotPaging, pagingColor, srcSet, style}
+) {
+    const _style = extractImageStyle(style);
     
-    if (['string', 'number', 'object'].includes(typeof(srcSet)) && !Array.isArray(srcSet)) srcSet = [srcSet];
-    else if (!Array.isArray(srcSet) || srcSet.length < 1) srcSet = [null];
+    let _srcSet: Array<?ImageSource>;
+    if (['string', 'number', 'object'].includes(typeof(srcSet)) && !Array.isArray(srcSet)) _srcSet = [srcSet]; //null, number, URI, source object
+    else if (!Array.isArray(srcSet) || srcSet.length < 1) _srcSet = [null]; //undefined and empty array
+    else _srcSet = srcSet; //array
     
-    const imageCount = srcSet.length,
-        scrollRef = React.useRef(null),
+    const imageCount = _srcSet.length,
+        scrollRef = React.useRef<ScrollViewRef>(null),
         [imageSize, setImageSize] = React.useState({width: 0, height: 0}),
         [selectedIndex, setSelectedIndex] = React.useState(0),
         pageWidth = imageSize.width + MARGIN,
-        onLayout = React.useCallback(
+        onLayout: LayoutEvent => mixed = React.useCallback(
             ({nativeEvent: {layout: {width, height}}}) => setImageSize({width, height}),
             []
-        );
-        onScroll = React.useCallback(
+        ),
+        onScroll: ScrollEvent => void = React.useCallback(
             ({nativeEvent: {contentOffset: {x}}}) => {
                 setSelectedIndex( Math.round(x / pageWidth) );
             },
             [pageWidth]
         ),
-        scrollTo = idx => scrollRef.current?.scrollTo({
+        scrollTo = (idx: number) => scrollRef.current?.scrollTo({
             x: idx * pageWidth,
             y: 0,
             animated: true,
-        });
+        }),
         setIndex = React.useCallback(
-            idx => {
-                idx = parseInt(idx) || 0;
-                if (idx < 0) idx = 0;
-                else if (idx >= imageCount) idx = imageCount - 1;
-                setSelectedIndex(idx);
+            (idx: number) => {
+                let _idx = parseInt(idx) || 0; //runtime check
+                if (_idx < 0) _idx = 0;
+                else if (_idx >= imageCount) _idx = imageCount - 1;
+                setSelectedIndex(_idx);
             },
             [imageCount]
         ),
-        imageStyle = [styles.image, style.image, imageSize];
+        imageStyle = [styles.image, _style.image, imageSize];
     
     React.useEffect(() => {
         scrollTo(selectedIndex);
@@ -148,35 +180,36 @@ const ImageSlider = React.memo(function ImageSlider({onChange, paging = DotPagin
         scrollTo(selectedIndex);
     }, [pageWidth]);
     
+    let pagingElement: React.Node = null;
     if (imageCount > 1 && isValidElementType(paging)) {
         const Paging = paging;
-        paging = <Paging
+        pagingElement = <Paging
             color={pagingColor}
             count={imageCount}
             setIndex={setIndex}
             selectedIndex={selectedIndex}
         />;
     }
-    else {
-        paging = null;
-    }
     
-    return <View style={style.view}> 
+    return <View style={_style.view}> 
         <View style={styles.fill}>
             <ScrollView
                 bounces={false}
                 contentContainerStyle={[styles.images, {width: imageCount * pageWidth - MARGIN}]}
                 contentOffset={{x: selectedIndex * pageWidth, y: 0}}
+                decelerationRate="normal"
+                disableIntervalMomentum={true}
                 horizontal
                 onLayout={onLayout}
                 onMomentumScrollEnd={onScroll}
+                pagingEnabled={true}
                 ref={scrollRef}
                 showsHorizontalScrollIndicator={false}
                 showsVerticalScrollIndicator={false}
                 snapToInterval={pageWidth}
                 style={styles.fill}
             >
-                {srcSet.map((src, idx) => src || src === 0 ?
+                {_srcSet.map((src, idx) => src || src === 0 ?
                     <Image
                         key={idx}
                         source={typeof(src) == 'string' ? {uri: src} : src}
@@ -187,36 +220,18 @@ const ImageSlider = React.memo(function ImageSlider({onChange, paging = DotPagin
                     </Text>
                 )}
             </ScrollView>
-            {paging}
+            {pagingElement}
         </View>
     </View>;
 });
-ImageSlider.propTypes = {
-    onChange: PropTypes.func,
-    paging: PropTypes.elementType,
-    pagingColor: PropTypes.string,
-    srcSet: PropTypes.oneOfType([
-        PropTypes.arrayOf(
-            PropTypes.oneOfType([
-                PropTypes.object,
-                PropTypes.string,
-                PropTypes.number,
-            ])
-        ),
-        PropTypes.object,
-        PropTypes.string,
-        PropTypes.number,
-    ]),
-    style: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
-};
 // ImageSlider.defaultProps = {
 //     paging: DotPaging,
 // };
 
-const DotPaging = React.memo(function DotPaging({color, count, outside = false, setIndex, selectedIndex}) {
+const DotPaging: PagingPosComponent = React.memo(function DotPaging({color, count, outside = false, setIndex, selectedIndex}) {
     const colorStyle = color ? {backgroundColor: color} : null;
     return <View style={[styles.pagingBottom, outside ? styles.pagingBottomOutside : styles.pagingBottomInside]}>
-        {new Array(count).fill(null).map((_, i) => 
+        {new Array<mixed>(count).fill(null).map((_, i) => 
             <TouchableWithoutFeedback
                 key={i}
                 onPress={() => setIndex(i)}
@@ -231,18 +246,18 @@ const DotPaging = React.memo(function DotPaging({color, count, outside = false, 
     </View>;
 });
 
-const NumberPaging = React.memo(function NumberPaging({color, count, outside = false, setIndex, selectedIndex}) {
+const NumberPaging: PagingPosComponent = React.memo(function NumberPaging({color, count, outside = false, setIndex, selectedIndex}) {
     const colorStyle = color ? {color: color} : null;
-    const PageNumber = ({number}) => 
+    const PageNumber: {page: number} => React.Node = ({page}) => 
         <Text
-            onPress={() => setIndex(number - 1)}
+            onPress={() => setIndex(page - 1)}
             style={[
                 styles.pagingNumber,
                 colorStyle,
-                number - 1 == selectedIndex ? styles.pagingNumberSelected : null,
+                page - 1 == selectedIndex ? styles.pagingNumberSelected : null,
             ]}
         >
-            {number}
+            {page}
         </Text>;
     
     let start = selectedIndex - MIDDLE_PAGE_DISTANCE + 1;
@@ -254,16 +269,16 @@ const NumberPaging = React.memo(function NumberPaging({color, count, outside = f
         if (start < 1) start = 1;
     }
     let isFirstVisible = false, isLastVisible = false;
-    const numbers = [];
-    for (let number = start; number <= end; number++) {
-        if (number == 1) isFirstVisible = true;
-        if (number == count) isLastVisible = true;
-        numbers.push(<PageNumber key={number} number={number} />);
+    const numbers: Array<React.Node> = [];
+    for (let page: number = start; page <= end; page++) {
+        if (page == 1) isFirstVisible = true;
+        if (page == count) isLastVisible = true;
+        numbers.push(<PageNumber key={page} page={page} />);
     }
 
     return <View style={[styles.pagingBottom, outside ? styles.pagingBottomOutside : styles.pagingBottomInside]}>
         <View style={{flexDirection: 'row', opacity: isFirstVisible ? 0 : 1}}>
-            <PageNumber number={1} />
+            <PageNumber page={1} />
             <Text style={colorStyle}>...</Text>
         </View>
 
@@ -273,12 +288,12 @@ const NumberPaging = React.memo(function NumberPaging({color, count, outside = f
         
         <View style={{flexDirection: 'row', opacity: isLastVisible ? 0 : 1}}>
             <Text style={colorStyle}>...</Text>
-            <PageNumber number={count} />
+            <PageNumber page={count} />
         </View>
     </View>;
 });
 
-const ArrowPaging = React.memo(function ArrowPaging({color, count, setIndex, selectedIndex}) {
+const ArrowPaging: PagingComponent = React.memo(function ArrowPaging({color, count, setIndex, selectedIndex}) {
     const colorStyle = color ? {borderColor: color} : null;
     return <>
         <View style={[styles.pagingArrowBox, styles.pagingArrowBoxLeft]}>

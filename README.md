@@ -23,7 +23,8 @@ export default () => {
     const [desc, setDesc] = React.useState('');
     const [_, setFlag] = React.useState(false);
     const onChange = React.useCallback(
-        idx => setDesc(descriptions[idx] || '')
+        idx => setDesc(descriptions[idx] || ''),
+        []
     );
     
     React.useEffect(() => {
@@ -249,10 +250,10 @@ benefiting absolute positioning in *style*, we can do that. Now, we change `styl
         flexDirection: 'row',
         justifyContent: 'center',
         paddingVertical: 3,
-        <b>position: 'absolute',
+        <strong>position: 'absolute',
         left: 0,
         right: 0,
-        bottom: 0,</b>
+        bottom: 0,</strong>
     },
 </pre>
 
@@ -269,12 +270,12 @@ first, we replace `bottom` prop in `styles.pagingBar` above to be
         position: 'absolute',
         left: 0,
         right: 0,
-        <b>top: -20,</b>
+        <strong>top: -20,</strong>
     },
 </pre>
 Then the second, we need more *styling* for the image slider:
 <pre>
-    &lt;ImageSlide style={[..., {<b>paddingTop: 20</b>}]} ... /&gt;
+    &lt;ImageSlide style={[..., {<strong>paddingTop: 20</strong>}]} ... /&gt;
 </pre>
 
 The negative value for `top` prop will place the numbers beyond the container `View` that makes the numbers positioned above
@@ -298,8 +299,8 @@ function TimerSlider({count, setIndex, selectedIndex}) {
             let idx = selectedIndex + 1;
             if (idx >= count) idx = 0;
             setIndex(idx);
-            return () => clearTimeout(t);
         }, 2000);
+        return () => clearTimeout(t);
     }, [selectedIndex]);
     return null;
 }
