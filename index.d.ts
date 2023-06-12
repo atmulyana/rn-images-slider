@@ -23,6 +23,8 @@ export interface PagingPosProp extends PagingProp {
 }
 
 export type ImageSliderProp = {
+    baseSrc?: string,
+    noImage?: React.JSX.Element,
     onChange?: (index: number) => any,
     paging?: typeof React.Component<PagingProp>,
     pagingColor?: ColorValue,

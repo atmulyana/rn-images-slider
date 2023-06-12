@@ -43,6 +43,7 @@ export default () => {
         ]}
     >
         <ImageSlider
+            baseSrc="https://ichef.bbci.co.uk/images/ic/976x549_b/"
             onChange={onChange}
             style={styles.images}
             srcSet={srcSet}
@@ -72,22 +73,22 @@ const styles = StyleSheet.create({
 });
 
 const srcSet = [
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p0493g9v.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p0493gpj.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p0493gtx.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p0493j1d.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jknr.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jkt5.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jkvt.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jkzx.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jl2w.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jl7c.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p049jlc7.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p04bkzwf.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p04bkzyl.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p04bl05c.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p04bl09v.jpg',
-    'https://ichef.bbci.co.uk/images/ic/976x549_b/p04bl0h4.jpg',
+    'p0493g9v.jpg',
+    'p0493gpj.jpg',
+    'p0493gtx.jpg',
+    'p0493j1d.jpg',
+    'p049jknr.jpg',
+    'p049jkt5.jpg',
+    'p049jkvt.jpg',
+    'p049jkzx.jpg',
+    'p049jl2w.jpg',
+    'p049jl7c.jpg',
+    'p049jlc7.jpg',
+    'p04bkzwf.jpg',
+    'p04bkzyl.jpg',
+    'p04bl05c.jpg',
+    'p04bl09v.jpg',
+    'p04bl0h4.jpg',
 ];
 
 const descriptions = [
@@ -111,6 +112,36 @@ const descriptions = [
 ```
 
 ## **Image Slider Element Props**
+- `baseSrc`   
+  is the base URI of image URIs. Usually, the images come from the same directory. So, `baseSrc` can refer to the URI of that directory
+  and you just write the file name of all images in `srcSet` prop.   
+  Another case, perhaps, you have image URI pattern like `https://www.yoursite.com/image?id=1`. Different image has different id, so 
+  each image URI is only differentiated by id value. For this case, you may set `baseSrc` to be `https://www.yoursite.com/image?id=`
+  and in `srcSet` array, you only write the id value of each image.   
+  **Please to note that**   
+  + this `baseSrc` only affects to all string item (incomplete URI) in `srcSet` array. If you set the image source as an object,
+    `baseSrc` is ignored.
+  + `baseSrc` value is simply concatenated with URI string in `srcSet`. Because of that, you must add the trailing slash ('/') to
+    `baseSrc` if needed.
+
+- `noImage`   
+  The element that will be displayed for items in `srcSet` which are `null` or `undefined`. Supposedly, the items are the image
+  sources and `ImageSlider` displays those images. So, why `null`/`undefined` value is acceptable. It's useful when the image source
+  hasn't been set in database but other informations, such as description, have been there. By default, when `null`/`undefined` item
+  found, `ImageSlider` will display "NO IMAGE" text. Example:
+  ```
+  <ImageSlider
+    noImage={<Image
+        source={require('./images/no-image.png')}
+        style={[
+            StyleSheet.absoluteFill,
+            {height: undefined, width: undefined, resizeMode: 'contain'}
+        ]}
+    />}
+    ...
+  />
+  ```
+
 - `onChange`   
   It's the callback function that will be invoked when the displayed image changes. The function has one parameter, that is the
   index/number (starting from 0) of currently displayed image. This index can be used to show the desciption of the displayed

@@ -31,6 +31,8 @@ export type PagingComponent = React.AbstractComponent<PagingProp>;
 export type PagingPosComponent = React.AbstractComponent<PagingPosProp>;
 
 export type ImageSliderProp = {
+    baseSrc?: string,
+    noImage?: React.MixedElement,
     onChange?: number => mixed,
     paging?: PagingComponent,
     pagingColor?: ColorValue,
@@ -55,11 +57,14 @@ const styles = StyleSheet.create({
     },
     noImage: {
         backgroundColor: '#aaa',
+        opacity: 0.5,
+        overflow: 'hidden',
+    },
+    noImageText: {
+        ...StyleSheet.absoluteFill,
         color: 'black',
         fontSize: 20,
         fontWeight: '900',
-        opacity: 0.5,
-        overflow: 'hidden',
         textAlign: 'center',
         textAlignVertical: 'center',
     },
@@ -132,10 +137,10 @@ const styles = StyleSheet.create({
 });
 
 const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(function ImageSlider(
-    {onChange, paging = DotPaging, pagingColor, srcSet, style}
+    {baseSrc, noImage, onChange, paging = DotPaging, pagingColor, srcSet, style}
 ) {
-    const _style = extractImageStyle(style);
-    
+    let _baseSrc = (baseSrc || '').trim(); //removes trailing slash(es) form `baseSrc`
+
     let _srcSet: Array<?ImageSource>;
     if (['string', 'number', 'object'].includes(typeof(srcSet)) && !Array.isArray(srcSet)) _srcSet = [srcSet]; //null, number, URI, source object
     else if (!Array.isArray(srcSet) || srcSet.length < 1) _srcSet = [null]; //undefined and empty array
@@ -170,7 +175,9 @@ const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(functio
             },
             [imageCount]
         ),
-        imageStyle = [styles.image, _style.image, imageSize];
+        _style = extractImageStyle(style),
+        imageStyle = [styles.image, _style.image, imageSize],
+        noImageStyle = [styles.noImage, imageSize];
     
     React.useEffect(() => {
         scrollTo(selectedIndex);
@@ -179,6 +186,8 @@ const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(functio
     React.useEffect(() => {
         scrollTo(selectedIndex);
     }, [pageWidth]);
+    
+    const noImageText = <Text style={styles.noImageText}>NO IMAGE</Text>;
     
     let pagingElement: React.Node = null;
     if (imageCount > 1 && isValidElementType(paging)) {
@@ -212,12 +221,16 @@ const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(functio
                 {_srcSet.map((src, idx) => src || src === 0 ?
                     <Image
                         key={idx}
-                        source={typeof(src) == 'string' ? {uri: src} : src}
+                        source={
+                            typeof(src) == 'string'
+                                ? {uri: _baseSrc + src.trim()}
+                                : src
+                        }
                         style={imageStyle}
                     /> :
-                    <Text key={idx} style={[styles.noImage, imageSize]}>
-                        NO IMAGE
-                    </Text>
+                    <View key={idx} style={noImageStyle}>
+                        {noImage ?? noImageText}
+                    </View>
                 )}
             </ScrollView>
             {pagingElement}
