@@ -161,31 +161,33 @@ const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(functio
             },
             [pageWidth]
         ),
-        scrollTo = (idx: number) => scrollRef.current?.scrollTo({
+        scrollTo = (idx: number, animated: boolean = true) => scrollRef.current?.scrollTo({
             x: idx * pageWidth,
             y: 0,
-            animated: true,
+            animated,
         }),
+        onContentSizeChange = React.useCallback(
+            () => {
+                scrollTo(selectedIndex, false);
+            },
+            [pageWidth, selectedIndex]
+        ),
         setIndex = React.useCallback(
             (idx: number) => {
                 let _idx = parseInt(idx) || 0; //runtime check
                 if (_idx < 0) _idx = 0;
                 else if (_idx >= imageCount) _idx = imageCount - 1;
-                setSelectedIndex(_idx);
+                scrollTo(_idx); //triggers `onScroll` event
             },
-            [imageCount]
+            [imageCount, pageWidth] //`pageWidth` for `scrollTo`
         ),
         _style = extractImageStyle(style),
         imageStyle = [styles.image, _style.image, imageSize],
         noImageStyle = [styles.noImage, imageSize];
     
     React.useEffect(() => {
-        scrollTo(selectedIndex);
         if (typeof(onChange) == 'function') onChange(selectedIndex);
     }, [selectedIndex]);
-    React.useEffect(() => {
-        scrollTo(selectedIndex);
-    }, [pageWidth]);
     
     const noImageText = <Text style={styles.noImageText}>NO IMAGE</Text>;
     
@@ -209,6 +211,7 @@ const ImageSlider: React.AbstractComponent<ImageSliderProp> = React.memo(functio
                 decelerationRate="normal"
                 disableIntervalMomentum={true}
                 horizontal
+                onContentSizeChange={onContentSizeChange}
                 onLayout={onLayout}
                 onMomentumScrollEnd={onScroll}
                 pagingEnabled={true}

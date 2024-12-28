@@ -9,7 +9,7 @@ React Native component for image slider.
 Because this is a React Native component, you must install it on a React Native project. Beside that, you must also install `rn-style-props`
 package. You may use the console command below:
 
-    npm i rn-style-props rn-flex-image
+    npm i rn-style-props rn-images-slider
 
 ## **Example**
 
@@ -149,8 +149,8 @@ const descriptions = [
 
 - `paging`   
   The paging component that will be used by the image slider. The paging here is the numbering for the images inside the image slider.
-  Beside swiping gesture, the user can tap an item/number shown by the paging component to display different image. There three paging
-  components provided by the package:  
+  Beside swiping gesture, the user can tap an item/number shown by the paging component to display different image. There are three
+  paging components provided by the package:  
   
   + `NumberPaging`  
     This component will show the image numbers at bottom side of the image slider. The user can tap each number to show the image at
